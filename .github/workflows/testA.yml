@@ -28,8 +28,8 @@ jobs:
         run: |
           npm install -g yq
           yq e ".images.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
-          git config --global user.name "hashilbasheer"
-          git config --global user.email "hashilbasheer@gmail.com"
+          git config --global user.name "${{ runner.name }}"
+          git config --global user.email "testr@gmail.com"
           git add manifest/values.yaml
           git commit -m " image tag changed to '$SHORT_SHA'  "
           git push origin main    
