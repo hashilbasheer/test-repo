@@ -54,7 +54,9 @@ jobs:
               success=$?
               
               if [[ $success -ne 0 ]]; then
-                  echo "Push failed, retrying..."
+                  echo "Push failed with exit code $success. Retrying..."
+                  # Show detailed error message
+                  git push origin main 2>&1 | tee push_errors.log
                   sleep 2  # Wait a bit before retrying
               fi
           done
