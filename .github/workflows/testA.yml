@@ -14,10 +14,12 @@ jobs:
   
     name: Update Helm Chart    
     steps:
-      - name: Clone Deployment Repo
-        uses: actions/checkout@master
-        with:
-          repository: hashilbasheer/argocd-test
+      - name: Clone Manifest Repository
+        run: | 
+          pwd
+          ls -la
+          git clone -b main ${REMOTE_REPO}
+          ls -la
       - name: Get Short sha
         run: |
           echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
