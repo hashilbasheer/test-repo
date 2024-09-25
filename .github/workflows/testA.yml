@@ -23,7 +23,7 @@ jobs:
         id: deployment
         run: |
           npm install -g yq
-          yq e ".images.name.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          yq e ".images.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
           git config --global user.name "hashilbasheer"
           git config --global user.email "hashilbasheer@gmail.com"
           git add manifest/values.yaml
