@@ -1,0 +1,30 @@
+name: Test A
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'service-analyst/**'
+    branches: [main]
+
+deployment:
+    runs-on: ubuntu-latest
+  
+    name: Update Helm Chart    
+    steps:
+      - name: Clone Deployment Repo
+        uses: actions/checkout@master
+        with:
+          repository: hashilbasheer/argocd-test
+      - name: Get Short sha
+        run: |
+          echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
+      - name: Update Image Version in the HelmChart values.yaml
+        id: deployment
+        run: |
+          npm install -g yq
+          yq e ".images.serviceanalyst.tag = \"$SHORT_SHA\"" -i dev-values.yaml
+          git config --global user.name "hashilbasheer"
+          git config --global user.email "hashilbasheer@gmail.com"
+          git add values.yaml
+          git commit -m " image tag changed to '$SHORT_SHA' "
+          git push origin main    
