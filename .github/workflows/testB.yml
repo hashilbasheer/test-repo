@@ -8,7 +8,7 @@ on:
 permissions:
   id-token: write
   contents: write
-  actions: write    
+  actions: write
 jobs:
   deployment:
     runs-on: ubuntu-latest
@@ -20,46 +20,51 @@ jobs:
         with:
           repository: hashilbasheer/argocd-test
           token: ${{ secrets.GHCR_TOKEN }}
-      
+
       - name: Get Short sha
         run: |
-          echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
-      
+          echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
+
       - name: Update Image Version in the HelmChart values.yaml
         run: |
+          # Define the retry parameters
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+          
+          # Install yq and update the image version
           npm install -g yq
           yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          
+          # Configure git
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"
+          
+          # Add and commit the changes
           git add manifest/values.yaml
           git commit -m "image tag changed to '$SHORT_SHA'"
           
-          # Retry logic for pushing changes
-          success=1
-          attempts=0
-          max_attempts=10
+          # Retry function to push changes with retries
+          retry_push() {
+            local attempt=1
 
-          while [[ $success -ne 0 && $attempts -lt $max_attempts ]]; do
-              ((attempts++))
+            while [ $attempt -le $MAX_RETRIES ]; do
+              # Pull latest changes before pushing
+              git pull --rebase origin main
               
-              # Pull the latest changes with rebase
-              git pull --rebase
-              if [[ $? -ne 0 ]]; then
-                  echo "Pull failed, retrying..."
-                  continue
+              # Try to push changes
+              if git push origin main; then
+                echo "Push succeeded on attempt $attempt."
+                return 0
+              else
+                echo "Push failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
+                ((attempt++))
+                sleep $RETRY_DELAY
               fi
-              
-              # Attempt to push
-              git push origin main
-              success=$?
-              
-              if [[ $success -ne 0 ]]; then
-                  echo "Push failed, retrying..."
-                  sleep 2  # Wait a bit before retrying
-              fi
-          done
+            done
 
-          if [[ $success -ne 0 ]]; then
-              echo "Gave up after $attempts attempts"
-              exit 1
-          fi
+            echo "Push failed after $MAX_RETRIES attempts."
+            return 1
+          }
+
+          # Execute the retry push logic
+          retry_push
