@@ -33,7 +33,7 @@ jobs:
           
           # Install yq and update the image version
           npm install -g yq
-          yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          yq e ".imagesB.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
           
           # Configure git
           git config --global user.name "hashilbasheer"
