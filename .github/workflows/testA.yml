@@ -23,9 +23,9 @@ jobs:
         id: deployment
         run: |
           npm install -g yq
-          yq e ".images.serviceanalyst.tag = \"$SHORT_SHA\"" -i dev-values.yaml
+          yq e ".images.name.tag = \"$SHORT_SHA\"" -i values.yaml
           git config --global user.name "hashilbasheer"
           git config --global user.email "hashilbasheer@gmail.com"
           git add values.yaml
-          git commit -m " image tag changed to '$SHORT_SHA' "
+          git commit -m " image tag changed to '$SHORT_SHA'  "
           git push origin main    
