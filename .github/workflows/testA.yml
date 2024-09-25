@@ -5,6 +5,8 @@ on:
     paths:
       - 'testA/**'
     branches: [main]
+env:
+  REMOTE_REPO: "https://${{ secrets.GHCR_TOKEN }}:@github.com/hashilbasheer/argocd-test.git"
 
 jobs:
   deployment:
