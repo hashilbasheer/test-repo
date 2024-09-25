@@ -28,8 +28,8 @@ jobs:
       - name: Update Image Version in the HelmChart values.yaml
         run: |
           # Define the retry parameters
-          MAX_RETRIES=5
-          RETRY_DELAY=10
+          MAX_RETRIES=10
+          RETRY_DELAY=15
           
           # Install yq and update the image version
           npm install -g yq
