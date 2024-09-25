@@ -20,15 +20,46 @@ jobs:
         with:
           repository: hashilbasheer/argocd-test
           token: ${{ secrets.GHCR_TOKEN }}
+      
       - name: Get Short sha
         run: |
-          echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
+          echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+      
       - name: Update Image Version in the HelmChart values.yaml
         run: |
           npm install -g yq
-          yq e ".imagesB.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"
           git add manifest/values.yaml
-          git commit -m " image tag changed to '$SHORT_SHA'  "
-          git push origin main 
+          git commit -m "image tag changed to '$SHORT_SHA'"
+          
+          # Retry logic for pushing changes
+          success=1
+          attempts=0
+          max_attempts=10
+
+          while [[ $success -ne 0 && $attempts -lt $max_attempts ]]; do
+              ((attempts++))
+              
+              # Pull the latest changes with rebase
+              git pull --rebase
+              if [[ $? -ne 0 ]]; then
+                  echo "Pull failed, retrying..."
+                  continue
+              fi
+              
+              # Attempt to push
+              git push origin main
+              success=$?
+              
+              if [[ $success -ne 0 ]]; then
+                  echo "Push failed, retrying..."
+                  sleep 2  # Wait a bit before retrying
+              fi
+          done
+
+          if [[ $success -ne 0 ]]; then
+              echo "Gave up after $attempts attempts"
+              exit 1
+          fi
