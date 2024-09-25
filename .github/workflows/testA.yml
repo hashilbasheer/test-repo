@@ -35,33 +35,16 @@ jobs:
           git commit -m "image tag changed to '$SHORT_SHA'"
           
           # Retry logic for pushing changes
-          success=1
-          attempts=0
-          max_attempts=10
-
-          while [[ $success -ne 0 && $attempts -lt $max_attempts ]]; do
-              ((attempts++))
-              
-              # Pull the latest changes with rebase
-              git pull --rebase
-              if [[ $? -ne 0 ]]; then
-                  echo "Pull failed, retrying..."
-                  continue
-              fi
-              
-              # Attempt to push
-              git push origin main
-              success=$?
-              
-              if [[ $success -ne 0 ]]; then
-                  echo "Push failed with exit code $success. Retrying..."
-                  # Show detailed error message
-                  git push origin main 2>&1 | tee push_errors.log
-                  sleep 10  # Wait a bit before retrying
-              fi
-          done
-
-          if [[ $success -ne 0 ]]; then
-              echo "Gave up after $attempts attempts"
-              exit 1
+          success=0;
+          attempts=0;
+          until $success || [ $attempts = 10 ];
+          do
+             let ++attempts;
+             git pull --rebase;
+             git push;
+             success=$?;
+          done;
+          if ! $success;
+          then
+              echo "Gave up after $attempts attempts";
           fi
