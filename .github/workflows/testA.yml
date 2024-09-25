@@ -5,6 +5,10 @@ on:
     paths:
       - 'testA/**'
     branches: [main]
+permissions:
+  id-token: write
+  contents: write
+  actions: write    
 jobs:
   deployment:
     runs-on: ubuntu-latest
