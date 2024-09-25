@@ -26,7 +26,7 @@ jobs:
       - name: Update Image Version in the HelmChart values.yaml
         run: |
           npm install -g yq
-          yq e ".images.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"
           git add manifest/values.yaml
