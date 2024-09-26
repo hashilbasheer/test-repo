@@ -1,0 +1,70 @@
+name: Test K
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'testK/**'
+    branches: [main]
+permissions:
+  id-token: write
+  contents: write
+  actions: write
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+  
+    name: Update Helm Chart    
+    steps:
+      - name: Clone Deployment Repo
+        uses: actions/checkout@master
+        with:
+          repository: hashilbasheer/argocd-test
+          token: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Get Short sha
+        run: |
+          echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Update Image Version in the HelmChart values.yaml
+        run: |
+          # Define the retry parameters
+          MAX_RETRIES=10
+          RETRY_DELAY=15
+          
+          # Install yq and update the image version
+          npm install -g yq
+          yq e ".imagesK.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
+          
+          # Configure git
+          git config --global user.name "hashilbasheer"
+          git config --global user.email "testr@gmail.com"
+          
+          # Add and commit the changes
+          git add manifest/values.yaml
+          git commit -m "image tag changed to '$SHORT_SHA'"
+          
+          # Retry function to push changes with retries
+          retry_push() {
+            local attempt=1
+
+            while [ $attempt -le $MAX_RETRIES ]; do
+              # Pull latest changes before pushing
+              git pull --rebase origin main
+              
+              # Try to push changes
+              if git push origin main; then
+                echo "Push succeeded on attempt $attempt."
+                return 0
+              else
+                echo "Push failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
+                ((attempt++))
+                sleep $RETRY_DELAY
+              fi
+            done
+
+            echo "Push failed after $MAX_RETRIES attempts."
+            return 1
+          }
+
+          # Execute the retry push logic
+          retry_push
