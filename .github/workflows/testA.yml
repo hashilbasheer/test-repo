@@ -29,10 +29,7 @@ jobs:
         run: |
           # MAX_RETRIES=10
           # RETRY_DELAY=20  
-          MAX_RETRIES=10           # Number of retry attempts for push
-          RETRY_DELAY=20           # Delay between push retries (in seconds)
-          REBASE_RETRIES=10         # Number of retry attempts for conflict resolution during rebase
-          REBASE_RETRY_DELAY=10    # Delay between rebase retries (in seconds)
+          
           # Install yq and update the image version
           npm install -g yq
           yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
@@ -145,4 +142,8 @@ jobs:
             echo "Push failed after $MAX_RETRIES attempts."
             return 1  # Exit the script with a failure code
            }
+          MAX_RETRIES=10           # Number of retry attempts for push
+          RETRY_DELAY=20           # Delay between push retries (in seconds)
+          REBASE_RETRIES=10         # Number of retry attempts for conflict resolution during rebase
+          REBASE_RETRY_DELAY=10    # Delay between rebase retries (in seconds)
           retry_push
