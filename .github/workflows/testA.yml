@@ -144,10 +144,5 @@ jobs:
 
             echo "Push failed after $MAX_RETRIES attempts."
             return 1  # Exit the script with a failure code
-        }
-
-        # Set retry parameters
-        
-
-        # Execute the retry push logic
-        retry_push
+           }
+          retry_push
