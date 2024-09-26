@@ -1,4 +1,3 @@
-
 name: Test D
 on:
   workflow_dispatch:
@@ -49,10 +48,32 @@ jobs:
             local attempt=1
 
             while [ $attempt -le $MAX_RETRIES ]; do
-              # Pull latest changes before pushing
-              git pull --rebase origin main
-              
-              # Try to push changes
+              # Pull latest changes with rebase
+              git pull --rebase origin main || {
+                echo "Rebase failed due to conflict, resolving..."
+                
+                # Check for merge conflicts and try to resolve them
+                if git status | grep -q 'You have unmerged paths'; then
+                  echo "Conflict detected in manifest/values.yaml"
+                  
+                  # Attempt to automatically resolve conflicts for the specific file
+                  git checkout --theirs manifest/values.yaml
+                  git add manifest/values.yaml
+                  
+                  # Continue the rebase process
+                  git rebase --continue || {
+                    echo "Failed to continue rebase, aborting..."
+                    git rebase --abort
+                    return 1
+                  }
+                else
+                  echo "Rebase failed without conflict, aborting..."
+                  git rebase --abort
+                  return 1
+                fi
+              }
+
+              # Try to push the changes
               if git push origin main; then
                 echo "Push succeeded on attempt $attempt."
                 return 0
@@ -67,5 +88,5 @@ jobs:
             return 1
           }
 
-          # Execute the retry push logic
+          # Execute the retry push logic with conflict handling
           retry_push
