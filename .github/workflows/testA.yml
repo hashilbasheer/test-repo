@@ -43,6 +43,7 @@ jobs:
           
           # Retry function to push changes with retries
           retry_push() {
+          set -x
           local attempt=1
           local changes_stashed=false
           local rebase_in_progress=false
