@@ -27,10 +27,8 @@ jobs:
 
       - name: Update Image Version in the HelmChart values.yaml
         run: |
-          # Define the retry parameters
           MAX_RETRIES=10
-          RETRY_DELAY=15
-          
+          RETRY_DELAY=20  
           # Install yq and update the image version
           npm install -g yq
           yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
@@ -45,45 +43,73 @@ jobs:
           
           # Retry function to push changes with retries
           retry_push() {
-            local attempt=1
+          local attempt=1
+          local changes_stashed=false
+          local rebase_in_progress=false
 
-            while [ $attempt -le $MAX_RETRIES ]; do
-              # Stash local changes to avoid conflicts
-              git stash
+           while [ $attempt -le $MAX_RETRIES ]; do
 
-              # Pull the latest changes with rebase
-              git pull --rebase origin main || {
-                echo "Rebase failed, aborting..."
-                git rebase --abort
-                return 1
-              }
+           # Check for local changes and stash only if there are any
+           if ! git diff-index --quiet HEAD --; then
+             echo "Local changes detected, stashing..."
+             git stash
+             changes_stashed=true
+           else
+             echo "No local changes to stash."
+             changes_stashed=false
+           fi
 
-              # Apply the stashed changes and commit them
-              git stash pop || {
+           # Pull the latest changes with rebase
+           echo "Pulling latest changes with rebase..."
+           git pull --rebase origin main || {
+             echo "Rebase failed, aborting..."
+             git rebase --abort
+             return 1
+           }
+
+           # Apply the stashed changes if any
+           if [ "$changes_stashed" = true ]; then
+            echo "Applying stashed changes..."
+            git stash pop || {
                 echo "Stash pop failed, trying to resolve conflicts..."
+
+                # Use the remote version to resolve conflict if detected
                 git checkout --theirs manifest/values.yaml
                 git add manifest/values.yaml
-                git rebase --continue || {
-                  echo "Failed to continue rebase, aborting..."
-                  git rebase --abort
-                  return 1
-                }
-              }
 
-              # Try to push the changes
-              if git push origin main; then
-                echo "Push succeeded on attempt $attempt."
-                return 0
-              else
-                echo "Push failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
-                ((attempt++))
-                sleep $RETRY_DELAY
-              fi
-            done
+                # Check if a rebase is in progress
+                if git rebase --continue; then
+                    rebase_in_progress=true
+                    echo "Rebase continued successfully."
+                else
+                    rebase_in_progress=false
+                    echo "No rebase in progress or failed to continue."
+                    git rebase --abort
+                    return 1
+                fi
+            }
+           else
+            echo "No stash applied, skipping stash pop."
+           fi
 
-            echo "Push failed after $MAX_RETRIES attempts."
-            return 1
+           # Try to push the changes
+           echo "Attempting to push the changes..."
+           if git push origin main; then
+            echo "Push succeeded on attempt $attempt."
+            return 0
+           else
+            echo "Push failed on attempt $attempt. Retrying in $RETRY_DELAY seconds..."
+            ((attempt++))
+            sleep $RETRY_DELAY
+           fi
+          done
+
+          echo "Push failed after $MAX_RETRIES attempts."
+          return 1
           }
 
-          # Execute the retry push logic with stash and conflict handling
+          # Set retry parameters
+         
+
+          # Execute the retry push logic
           retry_push
