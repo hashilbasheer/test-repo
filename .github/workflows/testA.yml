@@ -43,5 +43,5 @@ jobs:
           git commit -m "image tag changed to '$SHORT_SHA'"
           
           # Retry function to push changes with retries
-          chmod +x ${GITHUB_WORKSPACE}/scripts/retry_push.sh
-          bash ${GITHUB_WORKSPACE}/scripts/retry_push.sh
+          sh chmod +x ${GITHUB_WORKSPACE}/scripts/retry_push.sh
+          sh ${GITHUB_WORKSPACE}/scripts/retry_push.sh
