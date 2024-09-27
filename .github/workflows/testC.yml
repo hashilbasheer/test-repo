@@ -27,22 +27,10 @@ jobs:
 
       - name: Update Image Version in the HelmChart values.yaml
         run: |
-          # Define the retry parameters
-          MAX_RETRIES=10
-          RETRY_DELAY=15
-          
-          # Install yq and update the image version
           npm install -g yq
           yq e ".imagesC.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
-          
-          # Configure git
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"
-          
-          # Add and commit the changes
           git add manifest/values.yaml
           git commit -m "image tag changed to '$SHORT_SHA'"
-          
-          # Retry function to push changes with retries
-          chmod +x ./scripts/retry_push.sh
-          ./scripts/retry_push.sh
+          sh ${GITHUB_WORKSPACE}/scripts/retry_push.sh
