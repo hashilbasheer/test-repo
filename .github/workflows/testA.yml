@@ -10,20 +10,16 @@ permissions:
   contents: write
   actions: write
 jobs:
-  Checkout:
-    runs-on: ubuntu-latest
-  
-    name: Checkout code    
-    steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
   deployment:
     runs-on: ubuntu-latest
   
     name: Update Helm Chart    
     steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
       - name: Clone Helm Repo
         uses: actions/checkout@master
         with:
@@ -36,20 +32,10 @@ jobs:
 
       - name: Update Image Version in the HelmChart values.yaml
         run: |
-          # MAX_RETRIES=10
-          # RETRY_DELAY=20  
-          
-          # Install yq and update the image version
           npm install -g yq
           yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/values.yaml
-          
-          # Configure git
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"    
-          # Add and commit the changes
           git add manifest/values.yaml
           git commit -m "image tag changed to '$SHORT_SHA'"
-          ls -al
-          # Retry function to push changes with retries
-          ls -ltrh
           bash ${GITHUB_WORKSPACE}/retry_push.sh
