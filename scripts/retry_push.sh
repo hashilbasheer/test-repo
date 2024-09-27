@@ -1,3 +1,4 @@
+#!/bin/bash
 retry_push() {
             set -x  # Enable debugging (prints commands as they are executed)
             local attempt=1
