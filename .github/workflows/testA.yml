@@ -42,4 +42,4 @@ jobs:
           git config --global user.email "testr@gmail.com"    
           git add manifest/values.yaml
           git commit -m "image tag changed to '$SHORT_SHA'"
-          sh path/retry_push.sh
+          bash path/retry_push.sh
