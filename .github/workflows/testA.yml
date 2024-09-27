@@ -10,12 +10,21 @@ permissions:
   contents: write
   actions: write
 jobs:
+  Checkout:
+    runs-on: ubuntu-latest
+  
+    name: Checkout code    
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
   deployment:
     runs-on: ubuntu-latest
   
     name: Update Helm Chart    
     steps:
-      - name: Clone Deployment Repo
+      - name: Clone Helm Repo
         uses: actions/checkout@master
         with:
           repository: hashilbasheer/argocd-test
