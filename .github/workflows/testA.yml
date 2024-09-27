@@ -30,6 +30,10 @@ jobs:
         run: |
           echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
 
+      - name: check folders
+        run: |
+          ls -la
+
       - name: Update Image Version in the HelmChart values.yaml
         run: |
           npm install -g yq
