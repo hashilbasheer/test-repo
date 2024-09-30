@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'testA/**'
+      - 'testAn/**'
     branches: [main]
 permissions:
   id-token: write
