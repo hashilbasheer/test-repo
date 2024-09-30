@@ -1,0 +1,45 @@
+name: Test A
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'testA/**'
+    branches: [main]
+permissions:
+  id-token: write
+  contents: write
+  actions: write
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+  
+    name: Update Helm Chart    
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Clone Helm Repo
+        uses: actions/checkout@master
+        with:
+          repository: hashilbasheer/argocd-test
+          token: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Get Short sha
+        run: |
+          echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
+
+      - name: check folders
+        run: |
+          ls -la
+
+      - name: Update Image Version in the HelmChart values.yaml
+        run: |
+          npm install -g yq
+          yq e ".imagesA.tag = \"$SHORT_SHA\"" -i manifest/dev-values.yaml
+          git config --global user.name "hashilbasheer"
+          git config --global user.email "testr@gmail.com"    
+          git add manifest/dev-values.yaml
+          git commit -m "image tag changed to '$SHORT_SHA'"
+          sh ${GITHUB_WORKSPACE}/scripts/de-retry_push.sh
