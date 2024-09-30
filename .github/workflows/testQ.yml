@@ -32,5 +32,5 @@ jobs:
           git config --global user.name "hashilbasheer"
           git config --global user.email "testr@gmail.com"
           git add manifest/values.yaml
-          git commit -m "image tag changed to '$SHORT_SHA'"
+          git commit -m "image tag changed to '$SHORT_SHA' in HELM Repo"
           sh ${GITHUB_WORKSPACE}/scripts/retry_push.sh
