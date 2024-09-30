@@ -29,7 +29,7 @@ jobs:
       - name: Get Short sha
         run: |
           echo "SHORT_SHA=$(echo ${{ github.sha }} |cut -c1-7)" >> $GITHUB_ENV
-
+          
       - name: check folders
         run: |
           ls -la
@@ -42,4 +42,4 @@ jobs:
           git config --global user.email "testr@gmail.com"    
           git add manifest/dev-values.yaml
           git commit -m "image tag changed to '$SHORT_SHA'"
-          sh ${GITHUB_WORKSPACE}/scripts/dev-retry_push.sh
+          sh ${GITHUB_WORKSPACE}/scripts/script-with-args.sh  "$SHORT_SHA"
